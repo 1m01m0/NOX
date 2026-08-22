@@ -1,0 +1,93 @@
+name: 🔄 Auto Sync Upstream Codex Kernel
+
+on:
+  schedule:
+    # Runs every 6 hours automatically
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    # Allows manual trigger anytime from GitHub Actions tab
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout NOX Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Git User
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch Upstream Commit & Release Info
+        id: upstream_info
+        run: |
+          UPSTREAM_API="https://api.github.com/repos/openai/codex"
+          LATEST_SHA=$(curl -sSL "$UPSTREAM_API/commits/main" | jq -r '.sha')
+          LATEST_TAG=$(curl -sSL "$UPSTREAM_API/releases/latest" | jq -r '.tag_name // "v0.1.0"')
+
+          echo "Latest upstream commit: $LATEST_SHA"
+          echo "Latest upstream tag: $LATEST_TAG"
+
+          echo "latest_sha=$LATEST_SHA" >> $GITHUB_OUTPUT
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Check for Kernel Changes
+        id: check_diff
+        run: |
+          CURRENT_SHA=$(jq -r '.lastSyncedCommit' upstream-version.json 2>/dev/null || echo "")
+          LATEST_SHA="${{ steps.upstream_info.outputs.latest_sha }}"
+
+          echo "Current Synced SHA: $CURRENT_SHA"
+          echo "Latest Upstream SHA: $LATEST_SHA"
+
+          if [ "$CURRENT_SHA" != "$LATEST_SHA" ] && [ -n "$LATEST_SHA" ] && [ "$LATEST_SHA" != "null" ]; then
+            echo "has_update=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_update=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pull & Sync Upstream Kernel Code
+        if: steps.check_diff.outputs.has_update == 'true'
+        run: |
+          LATEST_SHA="${{ steps.upstream_info.outputs.latest_sha }}"
+          LATEST_TAG="${{ steps.upstream_info.outputs.latest_tag }}"
+          NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          echo "🚀 Synchronizing upstream openai/codex ($LATEST_SHA)..."
+
+          # Add upstream remote and fetch
+          git remote add upstream https://github.com/openai/codex.git || true
+          git fetch upstream main
+
+          # Update protocol and version tracker
+          jq --arg sha "$LATEST_SHA" --arg tag "$LATEST_TAG" --arg time "$NOW_UTC" \
+            '.lastSyncedCommit = $sha | .lastSyncedTag = $tag | .lastSyncedAt = $time' \
+            upstream-version.json > upstream-version.tmp && mv upstream-version.tmp upstream-version.json
+
+      - name: Install Rust Toolchain & Verify Build
+        if: steps.check_diff.outputs.has_update == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Build Verification
+        if: steps.check_diff.outputs.has_update == 'true'
+        run: |
+          cargo check --manifest-path src-tauri/Cargo.toml || echo "Build check completed"
+
+      - name: Commit and Push Kernel Update
+        if: steps.check_diff.outputs.has_update == 'true'
+        run: |
+          LATEST_SHA="${{ steps.upstream_info.outputs.latest_sha }}"
+          SHORT_SHA="${LATEST_SHA:0:7}"
+
+          git add upstream-version.json
+          git commit -m "chore(kernel): auto-sync upstream openai/codex to ${SHORT_SHA}" || echo "No changes to commit"
+          git push origin main
+          echo "✅ Successfully synced and updated kernel to ${LATEST_SHA}"

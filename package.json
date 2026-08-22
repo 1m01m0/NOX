@@ -1,5 +1,5 @@
 {
-  "name": "codex-desktop",
+  "name": "nox-desktop",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "desktop": "tauri dev",
     "desktop:build": "tauri build",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "sync:upstream": "bash scripts/sync-upstream.sh"
   },
   "dependencies": {
     "clsx": "^2.1.1",
