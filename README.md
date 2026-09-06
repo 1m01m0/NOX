@@ -1,65 +1,45 @@
 # NOX
 
-> 极简纯净的 AI 编程桌面工作台 / Minimalist Monochromatic AI Engineering Desktop
+NOX 是基于 Tauri 2、React 19 和 TypeScript 的 AI 编程桌面客户端，通过 Codex app-server 连接编程会话，提供工作区文件树、模型选择和推理强度设置。
 
-NOX 是一款专为开发者构建的轻量级原生桌面应用，基于 **Tauri v2 + React 19 + TypeScript + Tailwind CSS** 开发，采用纯粹的黑白灰极客视觉设计体系。内核直接驱动 **OpenAI Codex** 后端引擎。
+## 运行
 
----
+### 从源码运行
 
-## ✨ 核心特性
+需要 Node.js、pnpm，以及构建 Tauri 应用所需的 Rust 和平台开发工具。
 
-- 🖤 **极简黑白灰视觉体系**：摒弃杂乱色彩与冗余装饰，专注纯粹沉浸的代码编写与会话交互。
-- 📂 **自由伸缩项目文件树**：
-  - 侧边栏支持鼠标拖拽自由调整宽度（180px - 520px）。
-  - 支持直接点击左上角「NOX」收起/展开侧栏。
-  - 未选择工作区时保持极简空白，支持原生文件夹选择器一键切换工程。
-- 🧠 **Claude Code 风格 Effort 思考强度滑动条**：
-  - 4 档（Off / Low / Med / Max）离散刻度滑块。
-  - Faster ⟷ Smarter 交互引导，完美贴合模型推理预算控制。
-- 🤖 **模型快速切换**：内置 `o3-mini`、`o1`、`GPT-4o`、`Claude 3.7 Sonnet` 等前沿推理模型选单。
-- 🔄 **内核自动同步 (Auto-Sync Upstream Kernel)**：
-  - GitHub Actions 每 6 小时自动监听 `openai/codex` 官方仓库的最新 Commit 与 Release。
-  - 自动拉取协议更新并自动化构建跨平台（macOS Apple Silicon / Intel、Linux、Windows）二进制发布包。
-
----
-
-## 🛠️ 技术栈
-
-- **前端**：React 19, TypeScript, Tailwind CSS, Lucide Icons, Vite
-- **原生层**：Tauri v2 (Rust)
-- **协议**：JSON-RPC 2.0 双向流式通信
-- **内核驱动**：OpenAI Codex (`codex-app-server`)
-
----
-
-## 🚀 快速开始
-
-### 1. 安装依赖
-```bash
+```sh
+git clone https://github.com/1m01m0/NOX.git
+cd NOX
 pnpm install
-```
-
-### 2. 本地开发预览 (Web 模式)
-```bash
-pnpm dev
-```
-
-### 3. 启动桌面客户端 (Tauri 原生窗口)
-```bash
 pnpm desktop
 ```
 
-### 4. 手动同步上游官方内核
-```bash
-pnpm sync:upstream
+仅启动 Vite Web 开发界面：
+
+```sh
+pnpm dev
 ```
 
-### 5. 构建发布安装包
-```bash
+桌面集成通过 Tauri 原生命令完成；浏览器预览用于前端开发。
+
+## 开发
+
+```sh
+pnpm build
 pnpm desktop:build
 ```
 
----
+`pnpm build` 检查 TypeScript 并构建前端；`pnpm desktop:build` 构建桌面安装包。
 
-## 📄 License
-MIT License
+上游内核同步脚本位于 [scripts/sync-upstream.sh](scripts/sync-upstream.sh)：
+
+```sh
+pnpm sync:upstream
+```
+
+前端源码位于 [src/](src/)，原生工程位于 [src-tauri/](src-tauri/)，自动同步与构建配置位于 [.github/workflows/](.github/workflows/)。界面中的模型选项仍取决于后端实际提供的能力。
+
+## 许可证
+
+原 README 声明 MIT License；当前仓库未附独立许可证文件。
