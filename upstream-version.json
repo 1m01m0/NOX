@@ -1,8 +1,8 @@
 {
   "upstream": "openai/codex",
   "upstreamUrl": "https://github.com/openai/codex",
-  "lastSyncedCommit": "16e27626e654b29cc2ea696a545b2cd5f29db136",
-  "lastSyncedTag": "rust-v0.167.2",
-  "lastSyncedAt": "2026-11-12T22:57:25Z",
+  "lastSyncedCommit": "553c764e8b99fa519e9c6eb9b657875ef0f5e1c1",
+  "lastSyncedTag": "rust-v0.168.0",
+  "lastSyncedAt": "2026-11-13T04:01:58Z",
   "autoSyncIntervalHours": 6
 }
